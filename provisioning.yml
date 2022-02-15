@@ -1,15 +1,16 @@
 ---
-- hosts: all
-  handlers:
-    - name: restart apache
+- hosts: database
+  handlers: 
+    - name: restart mysql
       service: 
-        name: apache2
+        name: mysql
         state: restarted
       become: yes
-  tasks: 
+
+  tasks:
     - name: 'Instala pacotes de dependencia do sistema operacional'
       apt:
-        name: ['php5', 'apache2', 'libapache2-mod-php5', 'php5-gd', 'libssh2-php', 'php5-mcrypt', 'mysql-server-5.6', 'python-mysqldb', 'php5-mysql']
+        name: ['mysql-server-5.6', 'python-mysqldb']
         state: latest
       become: yes
 
@@ -26,10 +27,39 @@
         password: 12345
         priv: 'wordpress_db.*:ALL'
         state: present
+        host: "{{ item }}"
+      with_items:
+        - 'localhost'
+        - '127.0.0.1'
+        - '192.168.56.15'
+        
+    - name: 'Configura MySQL para aceitar conexões remotas'
+      copy: 
+        src: 'files/my.cnf'
+        dest: '/etc/mysql/my.cnf'
+      become: yes
+      notify:
+        - restart mysql
+
+### wordpress ####
+
+- hosts: wordpress
+  handlers:
+    - name: restart apache
+      service: 
+        name: apache2
+        state: restarted
+      become: yes
+  tasks: 
+    - name: 'Instala pacotes de dependencia do sistema operacional'
+      apt:
+        name: ['php5', 'apache2', 'libapache2-mod-php5', 'php5-gd', 'libssh2-php', 'php5-mcrypt', 'php5-mysql']
+        state: latest
+      become: yes
 
     - name: 'Baixa o aquivo de instalação do Wordpress'
       get_url:
-        url: 'https://wordpress.org/latest.tar.gz'
+        url: 'https://wordpress.org/wordpress-5.0.tar.gz'
         dest: '/tmp/wordpress.tar.gz'
 
     - name: 'Descompacta o wordpress'
@@ -55,6 +85,7 @@
         - { regex: 'database_name_here', value: 'wordpress_db' }
         - { regex: 'username_here', value: 'wordpress_use' }
         - { regex: 'password_here', value: '12345' }
+        - { regex: 'localhost', value: '192.168.56.16' }
       become: yes
 
     - name: 'Configura apache para servir o Wordpress'
