@@ -24,7 +24,7 @@
       mysql_user:
         login_user: root
         name: wordpress_user
-        password: 12345
+        password: '12345'
         priv: 'wordpress_db.*:ALL'
         state: present
         host: "{{ item }}"
@@ -32,7 +32,7 @@
         - 'localhost'
         - '127.0.0.1'
         - '192.168.56.15'
-        
+
     - name: 'Configura MySQL para aceitar conexões remotas'
       copy: 
         src: 'files/my.cnf'
@@ -83,7 +83,7 @@
         replace: "{{ item.value }}"
       with_items:
         - { regex: 'database_name_here', value: 'wordpress_db' }
-        - { regex: 'username_here', value: 'wordpress_use' }
+        - { regex: 'username_here', value: 'wordpress_user' }
         - { regex: 'password_here', value: '12345' }
         - { regex: 'localhost', value: '192.168.56.16' }
       become: yes
